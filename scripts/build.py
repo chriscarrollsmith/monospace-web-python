@@ -24,7 +24,7 @@ import json
 import re
 
 class MonospaceGenerator:
-    def __init__(self, input_file='demo/index.md', templates_dir='templates', output_dir='docs', static_dir='src'):
+    def __init__(self, input_file='demo/index.md', templates_dir='templates', output_dir='docs', static_dir='static'):
         self.input_file = input_file
         self.templates_dir = templates_dir
         self.output_dir = output_dir

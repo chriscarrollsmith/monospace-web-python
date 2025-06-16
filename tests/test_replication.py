@@ -25,9 +25,9 @@ class MonospaceReplicationTest:
         }
         self.generated_files = {
             'html': self.project_dir / 'docs' / 'index.html',
-            'css': self.project_dir / 'static' / 'style.css',
-            'reset_css': self.project_dir / 'static' / 'reset.css',
-            'js': self.project_dir / 'static' / 'index.js'
+            'css': self.project_dir / 'src' / 'style.css',
+            'reset_css': self.project_dir / 'src' / 'reset.css',
+            'js': self.project_dir / 'src' / 'index.js'
         }
     
     def read_file(self, filepath):

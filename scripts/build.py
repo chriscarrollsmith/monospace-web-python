@@ -24,7 +24,7 @@ import json
 import re
 
 class MonospaceGenerator:
-    def __init__(self, input_file='demo/index.md', templates_dir='templates', output_dir='docs', static_dir='static'):
+    def __init__(self, input_file='demo/index.md', templates_dir='templates', output_dir='docs', static_dir='src'):
         self.input_file = input_file
         self.templates_dir = templates_dir
         self.output_dir = output_dir
@@ -55,15 +55,15 @@ class MonospaceGenerator:
     def copy_static_files(self):
         """Copy static files to output directory."""
         if os.path.exists(self.static_dir):
-            static_output = os.path.join(self.output_dir, 'static')
+            static_output = os.path.join(self.output_dir, 'src')
             if os.path.exists(static_output):
                 shutil.rmtree(static_output)
             shutil.copytree(self.static_dir, static_output)
         
-        # Also copy any CSS/JS files from docs/static if they exist (from monospace styling)
-        docs_static = os.path.join(self.output_dir, 'static')
+        # Also copy any CSS/JS files from docs/src if they exist (from monospace styling)
+        docs_static = os.path.join(self.output_dir, 'src')
         if os.path.exists(docs_static):
-            # Copy additional files that might be in docs/static
+            # Copy additional files that might be in docs/src
             for filename in ['reset.css', 'index.js']:
                 src_path = os.path.join(docs_static, filename)
                 if os.path.exists(src_path):

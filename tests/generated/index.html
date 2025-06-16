@@ -4,8 +4,8 @@
   <meta charset="utf-8" />
   <meta name="generator" content="pandoc" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
-  <meta name="author" content="Christopher C. Smith" />
-  <title>The Monospace Web (Python Edition)</title>
+  <meta name="author" content="Oskar Wickström" />
+  <title>The Monospace Web</title>
   <link rel="stylesheet" href="src/reset.css" />
   <link rel="stylesheet" href="src/index.css" />
 </head>
@@ -13,8 +13,8 @@
 <table class="header">
   <tr>
     <td colspan="2" rowspan="2" class="width-auto">
-      <h1 class="title">The Monospace Web (Python Edition)</h1>
-      <span class="subtitle">A minimalist design exploration, rebuilt with duct tape and Python</span>
+      <h1 class="title">The Monospace Web</h1>
+      <span class="subtitle">A minimalist design exploration</span>
     </td>
     <th>Version</th>
     <td class="width-min">v0.1.5</td>
@@ -25,7 +25,7 @@
   </tr>
   <tr>
     <th class="width-min">Author</th>
-    <td class="width-auto"><a href="https://github.com/chriscarrollsmith"><cite>Christopher C. Smith</cite></a></td>
+    <td class="width-auto"><a href="https://wickstrom.tech"><cite>Oskar Wickström</cite></a></td>
     <th class="width-min">License</th>
     <td>MIT</td>
   </tr>
@@ -46,8 +46,6 @@
 </ul>
 </nav>
 <h2 id="introduction">Introduction</h2>
-<p>This is a Python-powered replication of <a href="https://github.com/owickstrom/the-monospace-web">The Monospace Web</a> by Oskar Wickström. 
-Where the original uses Nix, Pandoc, and Make (a sophisticated, principled approach), this version uses Python, Jinja2, and duct tape (an &ldquo;it works on my machine&rdquo; approach).</p>
 <p>Monospace fonts are dear to many of us. 
 Some find them more readable, consistent, and beautiful, than their proportional alternatives.
 Maybe we&rsquo;re just brainwashed from spending years in terminals?
@@ -55,13 +53,12 @@ Or are we hopelessly nostalgic?
 I&rsquo;m not sure.
 But I like them, and that&rsquo;s why I started experimenting with all-monospace Web.</p>
 <p>On this page, I use a monospace grid to align text and draw diagrams.
-It&rsquo;s generated from a simple Markdown document (using Python-Markdown instead of Pandoc), and the CSS and a tiny bit of Javascript renders it on the grid.
+It&rsquo;s generated from a simple Markdown document (using Pandoc), and the CSS and a tiny bit of Javascript renders it on the grid.
 The page is responsive, shrinking in character-sized steps.
 Standard elements should <em>just work</em>, at least that&rsquo;s the goal.
 It&rsquo;s semantic HTML, rendered as if we were back in the 70s.</p>
 <p>All right, but is this even a good idea?
-It&rsquo;s a technical and creative challenge and I like the aesthetic.
-The original project is much more sophisticated - this is just me having fun rebuilding it with my favorite tools.
+It&rsquo;s a technical and creative challenge and I like the aestethic.
 If you&rsquo;d like to use it, feel free to fork or copy the bits you need, respecting the license.
 I might update it over time with improvements and support for more standard elements.</p>
 <h2 id="the-basics">The Basics</h2>
@@ -245,11 +242,10 @@ Here are six grids with increasing cell count:</p>
 <p>They extend to the width of the page, and add appropriate padding in the bottom to maintain the monospace grid.</p>
 <h2 id="discussion">Discussion</h2>
 <p>That&rsquo;s it for now.
-I&rsquo;ve very much enjoyed making this, pushing my Python and Jinja2 chops and having a lot of fun with the design.
-If you like it or even decide to use it, please <a href="https://github.com/chriscarrollsmith/monospace-web-python">let me know</a>.</p>
-<p>The full source code is here: <a href="https://github.com/chriscarrollsmith/monospace-web-python">github.com/chriscarrollsmith/monospace-web-python</a></p>
-<p>A massive shout-out to <a href="https://github.com/owickstrom">Oskar Wickström</a> for the original design and inspiration, and to <a href="https://x.com/usgraphics">U.S. Graphics Company</a> for the monospace aesthetic that inspired us both.</p>
-<p>This site is automatically deployed using GitHub Actions, because apparently we can&rsquo;t just use <code>make</code> like normal people.</p>
+I&rsquo;ve very much enjoyed making this, pushing my CSS chops and having a lot of fun with the design.
+If you like it or even decide to use it, please <a href="https://x.com/owickstrom">let me know</a>.</p>
+<p>The full source code is here: <a href="https://github.com/owickstrom/the-monospace-web">github.com/owickstrom/the-monospace-web</a></p>
+<p>Finally, a massive shout-out to <a href="https://x.com/usgraphics">U.S. Graphics Company</a> for all the inspiration.</p>
   <div class="debug-grid"></div>
   <script src="src/index.js"></script>
 </body>

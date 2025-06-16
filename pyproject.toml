@@ -12,7 +12,9 @@ dependencies = [
     "Jinja2>=3.1.2",
     "PyYAML>=6.0.1",
     "python-frontmatter>=1.0.0",
-    "Pillow>=10.1.0"
+    "Pillow>=10.1.0",
+    "pymarkdown-video>=1.1.0",
+    "beautifulsoup4>=4.13.4",
 ]
 
 [project.urls]

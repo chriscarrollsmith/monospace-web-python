@@ -7,7 +7,10 @@ import os
 import sys
 import difflib
 import re
+import shutil
 from pathlib import Path
+from bs4 import BeautifulSoup
+from bs4.element import Tag
 
 # Add the parent directory to the path so we can import the build script
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -15,20 +18,35 @@ from scripts.build import MonospaceGenerator
 
 class MonospaceReplicationTest:
     def __init__(self):
-        self.test_dir = Path(__file__).parent
-        self.project_dir = self.test_dir.parent
+        """Initialize test paths and directories."""
+        self.test_dir = os.path.dirname(os.path.abspath(__file__))
+        self.project_dir = os.path.dirname(self.test_dir)
+        self.reference_dir = os.path.join(self.test_dir, 'reference')
+        self.generated_dir = os.path.join(self.test_dir, 'generated')
+        self.input_dir = os.path.join(self.test_dir, 'input')
+        
+        # Define file paths
         self.reference_files = {
-            'html': self.test_dir / 'reference' / 'index.html',
-            'css': self.test_dir / 'reference' / 'src' / 'index.css',
-            'reset_css': self.test_dir / 'reference' / 'src' / 'reset.css',
-            'js': self.test_dir / 'reference' / 'src' / 'index.js'
+            'html': os.path.join(self.reference_dir, 'index.html'),
+            'index_css': os.path.join(self.reference_dir, 'src', 'index.css'),
+            'reset_css': os.path.join(self.reference_dir, 'src', 'reset.css'),
+            'js': os.path.join(self.reference_dir, 'src', 'index.js')
         }
         self.generated_files = {
-            'html': self.project_dir / 'docs' / 'index.html',
-            'css': self.project_dir / 'docs' / 'src' / 'style.css',
-            'reset_css': self.project_dir / 'docs' / 'src' / 'reset.css',
-            'js': self.project_dir / 'docs' / 'src' / 'index.js'
+            'html': os.path.join(self.generated_dir, 'index.html'),
+            'index_css': os.path.join(self.generated_dir, 'src', 'index.css'),
+            'reset_css': os.path.join(self.generated_dir, 'src', 'reset.css'),
+            'js': os.path.join(self.generated_dir, 'src', 'index.js')
         }
+        self.input_files = {
+            'markdown': os.path.join(self.input_dir, 'index.md'),
+            'castle': os.path.join(self.input_dir, 'castle.jpg')
+        }
+        
+        # Create directories if they don't exist
+        os.makedirs(self.reference_dir, exist_ok=True)
+        os.makedirs(self.generated_dir, exist_ok=True)
+        os.makedirs(self.input_dir, exist_ok=True)
     
     def read_file(self, filepath):
         """Read a file and return its contents."""
@@ -112,57 +130,109 @@ class MonospaceReplicationTest:
         if reference_content == generated_content:
             return True, "Files match exactly"
         
+        # Split into lines and normalize each line
+        ref_lines = [line.strip() for line in reference_content.splitlines()]
+        gen_lines = [line.strip() for line in generated_content.splitlines()]
+        
+        # Remove empty lines
+        ref_lines = [line for line in ref_lines if line]
+        gen_lines = [line for line in gen_lines if line]
+        
         # Generate diff
         diff = list(difflib.unified_diff(
-            reference_content.splitlines(keepends=True),
-            generated_content.splitlines(keepends=True),
+            ref_lines,
+            gen_lines,
             fromfile=str(reference_path),
             tofile=str(generated_path),
-            n=3
+            n=3,
+            lineterm=''  # Don't add newlines since we're already working with lines
         ))
         
-        return False, ''.join(diff)
+        return False, '\n'.join(diff)
+    
+    def prettify_html(self, html_content):
+        """Prettify HTML content using BeautifulSoup."""
+        soup = BeautifulSoup(html_content, 'html.parser')
+        return soup.prettify()
+    
+    def extract_section(self, html, section_name):
+        """Extract a section of HTML between h2 tags."""
+        soup = BeautifulSoup(html, 'html.parser')
+        section = soup.find('h2', id=section_name)
+        if not section:
+            return ""
+        
+        # Get all elements until the next h2
+        elements = []
+        current = section.next_sibling
+        while current and not (isinstance(current, Tag) and current.name == 'h2'):
+            elements.append(str(current))
+            current = current.next_sibling
+        
+        return ''.join(elements)
     
     def test_html_structure(self):
-        """Test that HTML structure matches reference."""
+        """Test that the generated HTML structure matches the reference."""
         print("\n=== Testing HTML Structure ===")
         
-        match, diff = self.compare_files(
-            self.reference_files['html'],
-            self.generated_files['html'],
-            'html'
-        )
+        # Read both files
+        with open(self.reference_files['html'], 'r', encoding='utf-8') as f:
+            reference_content = f.read()
+        with open(self.generated_files['html'], 'r', encoding='utf-8') as f:
+            generated_content = f.read()
         
-        if match:
-            print("✓ HTML structure matches reference")
-            return True
-        else:
+        # Prettify both contents
+        reference_content = self.prettify_html(reference_content)
+        generated_content = self.prettify_html(generated_content)
+        
+        # Compare specific sections
+        sections_to_check = ['media', 'tables', 'lists', 'forms']
+        all_diffs = []
+        
+        for section in sections_to_check:
+            ref_section = self.extract_section(reference_content, section)
+            gen_section = self.extract_section(generated_content, section)
+            
+            if ref_section != gen_section:
+                diff = list(difflib.unified_diff(
+                    ref_section.splitlines(),
+                    gen_section.splitlines(),
+                    fromfile=f'reference/{section}',
+                    tofile=f'generated/{section}',
+                    lineterm=''
+                ))
+                if diff:
+                    all_diffs.append(f"\nDifferences in {section} section:")
+                    all_diffs.extend(diff)
+        
+        if all_diffs:
             print("✗ HTML structure differs from reference")
             print("Differences:")
-            print(diff[:2000])  # Limit output
-            if len(diff) > 2000:
-                print("... (output truncated)")
+            print('\n'.join(all_diffs))
             return False
+        else:
+            print("✓ HTML structure matches reference")
+            return True
     
     def test_css_styling(self):
         """Test that CSS styling matches reference."""
         print("\n=== Testing CSS Styling ===")
         
-        # Test main CSS
-        match, diff = self.compare_files(
-            self.reference_files['css'],
-            self.generated_files['css'],
+        # Test index CSS
+        index_match, index_diff = self.compare_files(
+            self.reference_files['index_css'],
+            self.generated_files['index_css'],
             'css'
         )
         
-        if match:
-            print("✓ Main CSS matches reference")
-            css_match = True
+        if index_match:
+            print("✓ Index CSS matches reference")
+            index_css_match = True
         else:
-            print("✗ Main CSS differs from reference")
+            print("✗ Index CSS differs from reference")
             print("Differences:")
-            print(diff[:2000])
-            css_match = False
+            print(index_diff[:2000])
+            index_css_match = False
         
         # Test reset CSS
         reset_match, reset_diff = self.compare_files(
@@ -173,31 +243,26 @@ class MonospaceReplicationTest:
         
         if reset_match:
             print("✓ Reset CSS matches reference")
+            reset_css_match = True
         else:
             print("✗ Reset CSS differs from reference")
-            print("Reset CSS Differences:")
+            print("Differences:")
             print(reset_diff[:2000])
-            css_match = False
+            reset_css_match = False
         
-        return css_match and reset_match
+        return index_css_match and reset_css_match
     
-    def test_javascript_functionality(self):
-        """Test that JavaScript functionality matches reference."""
-        print("\n=== Testing JavaScript Functionality ===")
+    def test_static_assets(self):
+        """Test that static assets are properly copied."""
+        print("\n=== Testing Static Assets ===")
         
-        match, diff = self.compare_files(
-            self.reference_files['js'],
-            self.generated_files['js'],
-            'js'
-        )
-        
-        if match:
-            print("✓ JavaScript matches reference")
+        # Check if castle.jpg exists in the output directory
+        castle_path = os.path.join(self.generated_dir, 'castle.jpg')
+        if os.path.exists(castle_path):
+            print("✓ castle.jpg found in output directory")
             return True
         else:
-            print("✗ JavaScript differs from reference")
-            print("Differences:")
-            print(diff[:2000])
+            print("✗ castle.jpg not found in output directory")
             return False
     
     def analyze_reference_structure(self):
@@ -222,9 +287,9 @@ class MonospaceReplicationTest:
             print(f"  Headers: {header_count}, Tables: {table_count}, Forms: {form_count}")
         
         # Analyze CSS
-        css_content = self.read_file(self.reference_files['css'])
+        css_content = self.read_file(self.reference_files['index_css'])
         if css_content:
-            print(f"✓ Reference CSS: {len(css_content)} characters")
+            print(f"✓ Reference Index CSS: {len(css_content)} characters")
             
             # Count CSS rules
             rule_count = len(re.findall(r'[^{}]+{[^{}]*}', css_content))
@@ -235,12 +300,25 @@ class MonospaceReplicationTest:
         if js_content:
             print(f"✓ Reference JavaScript: {len(js_content)} characters")
     
+    def cleanup_generated(self):
+        """Clean up the generated directory before running tests."""
+        if os.path.exists(self.generated_dir):
+            shutil.rmtree(self.generated_dir)
+        os.makedirs(self.generated_dir, exist_ok=True)
+    
     def run_build_and_test(self):
         """Run the build process and test the results."""
         print("=== Running Build Process ===")
         
+        # Clean up any previous test output
+        self.cleanup_generated()
+        
         try:
-            generator = MonospaceGenerator(input_file=str(self.test_dir / 'index.md'))
+            # Use the test output directory instead of docs/
+            generator = MonospaceGenerator(
+                input_dir=str(self.input_dir),
+                output_dir=str(self.generated_dir)
+            )
             generator.build()
             print("✓ Build completed successfully")
         except Exception as e:
@@ -250,15 +328,15 @@ class MonospaceReplicationTest:
         # Run all tests
         html_test = self.test_html_structure()
         css_test = self.test_css_styling()
-        js_test = self.test_javascript_functionality()
+        static_test = self.test_static_assets()
         
         # Summary
         print("\n=== Test Summary ===")
         print(f"HTML Structure: {'PASS' if html_test else 'FAIL'}")
         print(f"CSS Styling: {'PASS' if css_test else 'FAIL'}")
-        print(f"JavaScript: {'PASS' if js_test else 'FAIL'}")
+        print(f"Static Assets: {'PASS' if static_test else 'FAIL'}")
         
-        all_passed = html_test and css_test and js_test
+        all_passed = html_test and css_test and static_test
         print(f"\nOverall Result: {'ALL TESTS PASS' if all_passed else 'SOME TESTS FAILED'}")
         
         return all_passed

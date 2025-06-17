@@ -53,8 +53,12 @@ Thumbs.db
 .coverage
 htmlcov/
 .claude/
+.cursor/
 
 # Temporary files
 *.tmp
 *.temp
 .cache/
+
+# Test generated files
+tests/generated/

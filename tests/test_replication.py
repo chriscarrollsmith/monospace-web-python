@@ -303,32 +303,86 @@ class MonospaceReplicationTest:
     def cleanup_generated(self):
         """Clean up the generated directory before running tests."""
         if os.path.exists(self.generated_dir):
-            shutil.rmtree(self.generated_dir)
+            try:
+                shutil.rmtree(self.generated_dir)
+            except PermissionError as e:
+                print(f"Warning: Could not fully clean generated directory: {e}")
+                # Try to remove individual files if directory removal fails
+                for root, dirs, files in os.walk(self.generated_dir):
+                    for file in files:
+                        try:
+                            os.remove(os.path.join(root, file))
+                        except PermissionError:
+                            pass
+            except Exception as e:
+                print(f"Warning: Error during cleanup: {e}")
         os.makedirs(self.generated_dir, exist_ok=True)
+    
+    def setup_test_assets(self):
+        """Set up test assets by copying castle.jpg from demo to input directory."""
+        demo_castle = os.path.join(self.project_dir, 'demo', 'castle.jpg')
+        input_castle = os.path.join(self.input_dir, 'castle.jpg')
+        
+        if os.path.exists(demo_castle) and not os.path.exists(input_castle):
+            shutil.copy2(demo_castle, input_castle)
+            print(f"✓ Copied castle.jpg from demo to input directory")
+        elif os.path.exists(input_castle):
+            print(f"✓ castle.jpg already exists in input directory")
+        else:
+            print(f"✗ castle.jpg not found in demo directory")
+            return False
+        return True
+    
+    def cleanup_test_assets(self):
+        """Clean up test assets by removing castle.jpg from input directory."""
+        input_castle = os.path.join(self.input_dir, 'castle.jpg')
+        demo_castle = os.path.join(self.project_dir, 'demo', 'castle.jpg')
+        
+        # Only remove if it exists in demo (source) and input (copy)
+        if os.path.exists(input_castle) and os.path.exists(demo_castle):
+            try:
+                os.remove(input_castle)
+                print(f"✓ Cleaned up castle.jpg from input directory")
+            except Exception as e:
+                print(f"Warning: Could not remove castle.jpg from input: {e}")
     
     def run_build_and_test(self):
         """Run the build process and test the results."""
         print("=== Running Build Process ===")
+        
+        # Set up test assets first
+        if not self.setup_test_assets():
+            print("✗ Failed to set up test assets")
+            return False
         
         # Clean up any previous test output
         self.cleanup_generated()
         
         try:
             # Use the test output directory instead of docs/
+            # Fix templates path to point to project root templates
+            templates_dir = os.path.join(self.project_dir, 'templates')
+            static_dir = os.path.join(self.project_dir, 'static')
             generator = MonospaceGenerator(
                 input_dir=str(self.input_dir),
-                output_dir=str(self.generated_dir)
+                templates_dir=str(templates_dir),
+                output_dir=str(self.generated_dir),
+                static_dir=str(static_dir)
             )
             generator.build()
             print("✓ Build completed successfully")
         except Exception as e:
             print(f"✗ Build failed: {e}")
+            self.cleanup_test_assets()  # Clean up even on build failure
             return False
         
         # Run all tests
         html_test = self.test_html_structure()
         css_test = self.test_css_styling()
         static_test = self.test_static_assets()
+        
+        # Clean up test assets after tests are done
+        self.cleanup_test_assets()
         
         # Summary
         print("\n=== Test Summary ===")
@@ -338,6 +392,11 @@ class MonospaceReplicationTest:
         
         all_passed = html_test and css_test and static_test
         print(f"\nOverall Result: {'ALL TESTS PASS' if all_passed else 'SOME TESTS FAILED'}")
+        
+        # Final cleanup of generated files after tests complete
+        print("\n=== Final Cleanup ===")
+        self.cleanup_generated()
+        print("✓ Generated files cleaned up")
         
         return all_passed
     

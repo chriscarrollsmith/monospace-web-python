@@ -127,9 +127,10 @@ class MonospaceGenerator:
             )
             
             # Generate table of contents with the exact format needed
-            if hasattr(self.md, 'toc') and self.md.toc:
+            # The toc extension dynamically adds a 'toc' attribute to the Markdown instance
+            toc_html = getattr(self.md, 'toc', '')
+            if toc_html:
                 # Extract just the list items and format them properly
-                toc_html = self.md.toc
                 # Extract the inner <ul> content and add the class and IDs
                 ul_match = re.search(r'<ul>(.*?)</ul>', toc_html, re.DOTALL)
                 if ul_match:

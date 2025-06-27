@@ -90,7 +90,8 @@ hr {
   position: relative;
   display: block;
   height: var(--line-height);
-  margin: calc(var(--line-height) * 1.5) 0;
+  margin: var(--line-height) 0;
+  padding: calc(var(--line-height) * 0.5) 0;
   border: none;
   color: var(--text-color);
 }

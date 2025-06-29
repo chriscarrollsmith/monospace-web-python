@@ -126,13 +126,9 @@ em {
 }
 
 sub {
-  position: relative;
-  display: inline-block;
-  margin: 0;
+  font-size: 0.75rem;
   vertical-align: sub;
-  line-height: 0;
-  width: calc(1ch / 0.75);
-  font-size: .75rem;
+  line-height: 1;
 }
 
 table {
